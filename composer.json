@@ -1,0 +1,57 @@
+{
+  "name": "kerimkaralic/pimcore-gatekeeper-bundle",
+  "description": "Completeness gate for Pimcore DataObjects: per-class required fields, profiles and languages, scored on save, with reports and a publish gate.",
+  "type": "pimcore-bundle",
+  "license": "MIT",
+  "keywords": [
+    "pimcore",
+    "pimcore-bundle",
+    "completeness",
+    "data-quality",
+    "pim"
+  ],
+  "require": {
+    "php": ">=8.1 <8.6",
+    "doctrine/dbal": "^3.6 || ^4.0",
+    "pimcore/pimcore": "^11.0 || ^12.0 || ^2026.1",
+    "psr/log": "^1.1 || ^2.0 || ^3.0",
+    "symfony/config": "^6.2 || ^7.3",
+    "symfony/console": "^6.2 || ^7.3",
+    "symfony/dependency-injection": "^6.2 || ^7.3",
+    "symfony/http-kernel": "^6.2 || ^7.3"
+  },
+  "require-dev": {
+    "codeception/codeception": "^5.0",
+    "codeception/module-asserts": "^3.0",
+    "phpunit/phpunit": "^10.5 || ^11.0",
+    "symfony/event-dispatcher": "^6.2 || ^7.3"
+  },
+  "suggest": {
+    "pimcore/custom-reports-bundle": "Shows the completeness report in the admin UI (Studio and Classic). Part of pimcore/pimcore since 11, enable PimcoreCustomReportsBundle."
+  },
+  "autoload": {
+    "psr-4": {
+      "Tsf\\GatekeeperBundle\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Tsf\\GatekeeperBundle\\Tests\\": "tests/"
+    }
+  },
+  "extra": {
+    "pimcore": {
+      "bundles": [
+        "Tsf\\GatekeeperBundle\\TsfGatekeeperBundle"
+      ]
+    }
+  },
+  "config": {
+    "sort-packages": true
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true,
+  "scripts": {
+    "test": "codecept run"
+  }
+}

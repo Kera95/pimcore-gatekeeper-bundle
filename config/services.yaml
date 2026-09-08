@@ -1,0 +1,34 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: false
+
+    _instanceof:
+        Tsf\GatekeeperBundle\Service\Emptiness\EmptinessResolverInterface:
+            tags: ['tsf_gatekeeper.emptiness_resolver']
+
+    Tsf\GatekeeperBundle\:
+        resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/Model/'
+            - '../src/Installer.php'
+            - '../src/TsfGatekeeperBundle.php'
+
+    Tsf\GatekeeperBundle\Installer:
+        public: true
+        arguments:
+            $bundle: "@=service('kernel').getBundle('TsfGatekeeperBundle')"
+
+    Tsf\GatekeeperBundle\Service\Emptiness\EmptinessChecker:
+        arguments:
+            $resolvers: !tagged_iterator tsf_gatekeeper.emptiness_resolver
+
+    Tsf\GatekeeperBundle\EventListener\DataObjectListener:
+        tags:
+            - { name: kernel.event_listener, event: pimcore.dataobject.preAdd, method: onPreSave }
+            - { name: kernel.event_listener, event: pimcore.dataobject.preUpdate, method: onPreSave }
+            - { name: kernel.event_listener, event: pimcore.dataobject.postAdd, method: onPostSave }
+            - { name: kernel.event_listener, event: pimcore.dataobject.postUpdate, method: onPostSave }
+            - { name: kernel.event_listener, event: pimcore.dataobject.postDelete, method: onPostDelete }

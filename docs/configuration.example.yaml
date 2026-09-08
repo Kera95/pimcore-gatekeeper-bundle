@@ -1,0 +1,57 @@
+# Copy this file to config/packages/tsf_gatekeeper.yaml in the consuming Pimcore project.
+
+tsf_gatekeeper:
+    # Master switch. When false nothing is evaluated on save; the commands still work.
+    enabled: true
+
+    # One entry per DataObject class that should be tracked.
+    classes:
+        Product:
+            # Fields that must be filled for the object to count as complete. Localized fields
+            # are listed by their plain name; the bundle evaluates them per language.
+            required: [sku, name, title, description, main_image, price]
+
+            # Languages to evaluate for localized fields. Omit for every valid system language.
+            languages: [en, de]
+
+            # Score (0-100) at which the object counts as complete. Default 100.
+            threshold: 100
+
+            # off:   compute and store only
+            # warn:  log a warning when a published object is saved below the threshold (default)
+            # block: refuse to save a published object below the threshold; unpublished saves pass
+            gate: warn
+
+            # Optional Numeric field on the class that receives the aggregate (lowest) score on
+            # every save, so it shows up in grids, listings and $object->getCompleteness().
+            # Create it with: bin/console tsf:gatekeeper:add-score-field Product
+            score_field: completeness
+
+            # Optional additional rule sets (channels, markets). Each inherits languages and
+            # threshold from the class unless it sets its own.
+            profiles:
+                print:
+                    required: [name, ean, long_description, hotspot_image]
+                    languages: [de]
+                    threshold: 80
+                marketplace:
+                    required: [name, ean, price, categories]
+
+        Category:
+            required: [name, title]
+            gate: off
+
+    report:
+        # Register "Completeness: objects" and "Completeness: summary" under Reporting when
+        # PimcoreCustomReportsBundle is enabled.
+        studio: true
+
+        # Write the report as files into the asset tree (tsf:gatekeeper:report --asset).
+        asset:
+            enabled: false
+            folder: /reports/completeness
+            # csv: one <Class>.csv per class with every row. md: one summary.md across classes.
+            formats: [csv, md]
+            # true: also rewrite the files after every save of a tracked object (reads all
+            # results each time, keep off unless the catalogue is small).
+            on_save: false
