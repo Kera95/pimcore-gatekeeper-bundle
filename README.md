@@ -90,7 +90,7 @@ bin/console tsf:gatekeeper:validate
 | Key | Default | Meaning |
 |---|---|---|
 | `enabled` | `true` | Master switch for the save listener. Commands work regardless. |
-| `classes.<Class>.required` | `[]` | Field names that must be filled. Top-level fields and children of `localizedfields` by their plain name. Becomes the profile named `default`. |
+| `classes.<Class>.required` | `[]` | Field names that must be filled: top-level fields, children of `localizedfields` by their plain name, or `container.Type.field` for object brick and field collection fields. Becomes the profile named `default`. |
 | `classes.<Class>.languages` | `[]` | Languages evaluated for localized fields. Empty means every valid system language. |
 | `classes.<Class>.threshold` | `100` | Score from which an object counts as complete, 0-100. |
 | `classes.<Class>.gate` | `warn` | `off`, `warn` or `block`, see below. |
@@ -122,8 +122,12 @@ the container is built; classes, fields and system languages are validated by
 - The **aggregate score** of an object is the lowest row score. That is what goes into the
   `score_field` and what the gate looks at.
 - Variants are evaluated like any other object. Folders are ignored.
-- Fields inside object bricks, field collections or classification stores cannot be listed
-  individually; list the container field instead (an empty container counts as missing).
+- Fields inside **object bricks** and **field collections** are listed as `container.Type.field`,
+  e.g. `bricks.Dimensions.width` or `features.Feature.label`. A brick field is filled when the
+  brick is set and the field is filled; a field collection field is filled when **any** item of
+  that type has it filled. Localized fields inside bricks and collections work the same way as on
+  the class. Listing the container itself (`bricks`, `features`) means "at least one brick / item".
+  Classification store keys are not supported.
 
 ### What counts as empty
 
@@ -181,6 +185,7 @@ bin/console tsf:gatekeeper:report --below 50         # rows scoring below 50
 bin/console tsf:gatekeeper:report -p print --language de
 bin/console tsf:gatekeeper:report --format=csv > completeness.csv
 bin/console tsf:gatekeeper:report --format=md        # Markdown tables, paste into a ticket
+bin/console tsf:gatekeeper:report --summary          # one line per class, profile and language
 ```
 
 ```
@@ -212,7 +217,7 @@ the Custom Reports bundle, and gives people without admin access a file they can
 |---|---|
 | `tsf:gatekeeper:validate` | Checks every class rule against the installed classes, fields, score field type and system languages. Exit code 1 on problems. |
 | `tsf:gatekeeper:recalculate [-c Class] [--limit N] [--dry-run] [--save]` | Evaluates all objects of the configured classes and rewrites the result table. Objects are not saved unless `--save` is given, which also refreshes the score field, versions and the search index (slow). |
-| `tsf:gatekeeper:report [...]` | Prints the report, see above. |
+| `tsf:gatekeeper:report [...]` | Prints the object rows, or with `--summary` the totals per class, profile and language; `--format table\|csv\|md`; `--asset` writes the files. |
 | `tsf:gatekeeper:add-score-field <Class> [--name=completeness] [--panel=<layout name>]` | Adds a Numeric 0-100 field to a class so `score_field` can be used. |
 
 Run `recalculate` once after installing or after changing the rules; from then on every save keeps
@@ -251,6 +256,11 @@ vendor/bin/codecept run
 The unit suite runs without a database or a Pimcore kernel; it covers the configuration, rule
 normalisation, the emptiness rules per data type, the evaluator, the listener with every gate
 mode, the report rendering and the report definitions.
+
+## Contributing
+
+Branching model, pull request rules and how to run the suite: [CONTRIBUTING.md](CONTRIBUTING.md).
+Changes are tracked in [CHANGELOG.md](CHANGELOG.md).
 
 ## License
 

@@ -40,8 +40,8 @@ final class EvaluatorTest extends Unit
         $this->reader->method('isLocalized')->willReturnCallback(
             fn (ClassDefinition $class, string $field): bool => $this->fields[$field]['localized'] ?? false
         );
-        $this->reader->method('read')->willReturnCallback(
-            fn (ObjectStub $object, string $field, ?string $language): mixed => $this->fields[$field]['values'][$language ?? ''] ?? null
+        $this->reader->method('readAll')->willReturnCallback(
+            fn (ObjectStub $object, string $field, ?string $language): array => [$this->fields[$field]['values'][$language ?? ''] ?? null]
         );
 
         $this->languages = $this->createMock(LanguageProvider::class);
@@ -114,6 +114,25 @@ final class EvaluatorTest extends Unit
             self::assertSame(['sku'], $result->getMissing());
             self::assertSame(50, $result->getScore());
         }
+    }
+
+    public function testAFieldWithSeveralCandidatesIsFilledWhenAnyIsFilled(): void
+    {
+        $reader = $this->createMock(FieldReader::class);
+        $reader->method('getDefinition')->willReturn(new Data\Input());
+        $reader->method('isLocalized')->willReturn(false);
+        $reader->method('readAll')->willReturnCallback(static fn (ObjectStub $o, string $field): array => match ($field) {
+            'features.Feature.label' => ['', 'Backlit'],
+            'bricks.Dimensions.width' => [],
+            default => [null],
+        });
+        $evaluator = new Evaluator($reader, new EmptinessChecker([new StringResolver()]), $this->languages);
+
+        $evaluation = $evaluator->evaluate(new ObjectStub('Product', 2), $this->rule([
+            new Profile('default', ['features.Feature.label', 'bricks.Dimensions.width'], [], 100),
+        ]));
+
+        self::assertSame(['bricks.Dimensions.width'], $evaluation->getResults()[0]->getMissing());
     }
 
     public function testUnknownFieldsCountAsMissing(): void

@@ -42,6 +42,7 @@ final class ReportCommand extends Command
             ->addOption('below', 'b', InputOption::VALUE_REQUIRED, 'Only rows with a score below this value')
             ->addOption('only-failed', 'f', InputOption::VALUE_NONE, 'Only rows below their threshold')
             ->addOption('format', null, InputOption::VALUE_REQUIRED, 'table, csv or md', 'table')
+            ->addOption('summary', 's', InputOption::VALUE_NONE, 'Print one line per class, profile and language (objects, average score, complete, failing) instead of the object rows')
             ->addOption('asset', null, InputOption::VALUE_NONE, 'Write the configured formats into the asset tree (report.asset must be enabled)')
             ->addOption('timestamp', null, InputOption::VALUE_NONE, 'With --asset: append -YYYYmmdd-HHMM to the filenames instead of overwriting');
     }
@@ -57,20 +58,11 @@ final class ReportCommand extends Command
         }
 
         $class = $input->getOption('class');
-        $rows = $this->store->fetchRows(
-            $class,
-            $input->getOption('profile-name'),
-            $input->getOption('language'),
-            $input->getOption('below') !== null ? (int) $input->getOption('below') : null,
-            (bool) $input->getOption('only-failed')
-        );
 
-        if ($format === 'csv') {
-            $output->write($this->builder->csv($rows));
-        } elseif ($format === 'md') {
-            $output->writeln($this->builder->markdown($rows));
+        if ($input->getOption('summary')) {
+            $this->renderSummary($input, $output, $io, $format);
         } else {
-            $this->renderTable($rows, $output, $io);
+            $this->renderRows($input, $output, $io, $format);
         }
 
         if ($input->getOption('asset')) {
@@ -85,6 +77,55 @@ final class ReportCommand extends Command
         }
 
         return Command::SUCCESS;
+    }
+
+    private function renderSummary(InputInterface $input, OutputInterface $output, SymfonyStyle $io, string $format): void
+    {
+        $summary = $this->store->fetchSummary($input->getOption('class'), $input->getOption('profile-name'), $input->getOption('language'));
+
+        if ($format === 'csv') {
+            $output->write($this->builder->summaryCsv($summary));
+
+            return;
+        }
+        if ($format === 'md') {
+            $output->writeln($this->builder->summaryTableMarkdown($summary));
+
+            return;
+        }
+        if (count($summary) === 0) {
+            $io->warning('No results yet. Save an object or run tsf:gatekeeper:recalculate.');
+
+            return;
+        }
+
+        $table = $this->builder->summaryTable($summary);
+        $output->writeln('');
+        $consoleTable = new Table($output);
+        $consoleTable->setStyle('compact');
+        $consoleTable->setHeaders($table['header']);
+        $consoleTable->setRows($table['rows']);
+        $consoleTable->render();
+        $output->writeln('');
+    }
+
+    private function renderRows(InputInterface $input, OutputInterface $output, SymfonyStyle $io, string $format): void
+    {
+        $rows = $this->store->fetchRows(
+            $input->getOption('class'),
+            $input->getOption('profile-name'),
+            $input->getOption('language'),
+            $input->getOption('below') !== null ? (int) $input->getOption('below') : null,
+            (bool) $input->getOption('only-failed')
+        );
+
+        if ($format === 'csv') {
+            $output->write($this->builder->csv($rows));
+        } elseif ($format === 'md') {
+            $output->writeln($this->builder->markdown($rows));
+        } else {
+            $this->renderTable($rows, $output, $io);
+        }
     }
 
     /**

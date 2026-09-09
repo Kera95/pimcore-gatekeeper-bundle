@@ -76,15 +76,24 @@ class ReportBuilder
      */
     public function csv(array $rows): string
     {
+        return $this->toCsv(self::CSV_COLUMNS, $rows);
+    }
+
+    /**
+     * @param string[] $columns
+     * @param array<int, array<string, mixed>> $rows
+     */
+    private function toCsv(array $columns, array $rows): string
+    {
         $handle = fopen('php://temp', 'r+');
         if ($handle === false) {
             throw new \RuntimeException('Could not open a temporary stream.');
         }
 
-        fputcsv($handle, self::CSV_COLUMNS, ',', '"', '\\', "\n");
+        fputcsv($handle, $columns, ',', '"', '\\', "\n");
         foreach ($rows as $row) {
             $line = [];
-            foreach (self::CSV_COLUMNS as $column) {
+            foreach ($columns as $column) {
                 $value = $row[$column] ?? '';
                 $line[] = $column === 'passed' || $column === 'published' ? ((int) $value === 1 ? 'yes' : 'no') : (string) $value;
             }
@@ -113,6 +122,54 @@ class ReportBuilder
                 $out[] = '| ' . implode(' | ', array_map(static fn (string $cell): string => str_replace('|', '\\|', trim($cell)), $row)) . ' |';
             }
             $out[] = '';
+        }
+
+        return implode("\n", $out);
+    }
+
+    public const SUMMARY_COLUMNS = ['class_name', 'profile', 'language', 'objects', 'average_score', 'complete', 'failing', 'threshold', 'last_calculated_at'];
+
+    /**
+     * Summary rows (ResultStore::fetchSummary) as a single table: header + string cells
+     *
+     * @param array<int, array<string, mixed>> $summary
+     *
+     * @return array{header: string[], rows: array<int, array<int, string>>}
+     */
+    public function summaryTable(array $summary): array
+    {
+        return [
+            'header' => ['class', 'profile', 'lang', 'objects', 'avg', 'complete', 'failing', 'threshold'],
+            'rows' => array_map(static fn (array $row): array => [
+                (string) $row['class_name'],
+                (string) $row['profile'],
+                $row['language'] === '' ? '-' : (string) $row['language'],
+                (string) (int) $row['objects'],
+                sprintf('%3d %%', (int) $row['average_score']),
+                (string) (int) $row['complete'],
+                (string) (int) $row['failing'],
+                sprintf('%3d %%', (int) $row['threshold']),
+            ], $summary),
+        ];
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $summary
+     */
+    public function summaryCsv(array $summary): string
+    {
+        return $this->toCsv(self::SUMMARY_COLUMNS, $summary);
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $summary
+     */
+    public function summaryTableMarkdown(array $summary): string
+    {
+        $table = $this->summaryTable($summary);
+        $out = ['| ' . implode(' | ', $table['header']) . ' |', '|' . str_repeat(' --- |', count($table['header']))];
+        foreach ($table['rows'] as $row) {
+            $out[] = '| ' . implode(' | ', array_map('trim', $row)) . ' |';
         }
 
         return implode("\n", $out);

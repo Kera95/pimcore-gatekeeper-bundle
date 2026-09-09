@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tsf\GatekeeperBundle\Service;
 
+use Pimcore\Model\DataObject\ClassDefinition\Data;
 use Pimcore\Model\DataObject\Concrete;
 use Tsf\GatekeeperBundle\Model\ClassRule;
 use Tsf\GatekeeperBundle\Model\Evaluation;
@@ -53,9 +54,9 @@ class Evaluator
                     }
 
                     $isLocalized = in_array($field, $localizedFields, true);
-                    $value = $this->fieldReader->read($object, $field, $isLocalized ? $language : null);
+                    $values = $this->fieldReader->readAll($object, $field, $isLocalized ? $language : null);
 
-                    if (!$this->emptiness->isFilled($definition, $value)) {
+                    if (!$this->anyFilled($definition, $values)) {
                         $missing[] = $field;
                     }
                 }
@@ -71,6 +72,20 @@ class Evaluator
         }
 
         return new Evaluation((string) $object->getClassName(), $results);
+    }
+
+    /**
+     * @param array<int, mixed> $values
+     */
+    private function anyFilled(Data $definition, array $values): bool
+    {
+        foreach ($values as $value) {
+            if ($this->emptiness->isFilled($definition, $value)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
