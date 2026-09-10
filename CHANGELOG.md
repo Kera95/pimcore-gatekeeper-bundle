@@ -23,3 +23,11 @@ All notable changes to this bundle are documented here. The format follows
 - `tsf:gatekeeper:report --summary` for the per class/profile/language totals on the console.
 - Emptiness rules per data type with an `EmptinessResolverInterface` extension point.
 - Codeception unit suite that runs without a database or a Pimcore kernel.
+- Codeception functional suite that boots a minimal Pimcore kernel (`tests/Support/App`) against a
+  real database and covers the installer, the gate, the score field and result rows on save, the
+  delete hook, the console commands, the asset export and the Custom Reports definitions.
+
+### Fixed
+
+- `tsf:gatekeeper:add-score-field` refreshes the field definitions of the loaded class, so a
+  second call in the same process sees the new field.
