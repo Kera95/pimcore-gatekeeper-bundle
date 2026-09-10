@@ -67,6 +67,24 @@ final class ReportBuilderTest extends Unit
         self::assertStringContainsString('| 6 | PCSA-001 |', $markdown);
     }
 
+    public function testSummaryTableCsvAndMarkdown(): void
+    {
+        $summary = [
+            ['class_name' => 'Product', 'profile' => 'default', 'language' => '', 'objects' => 4, 'average_score' => 64, 'complete' => 1, 'failing' => 3, 'threshold' => 100, 'last_calculated_at' => '2026-09-08 10:00:00'],
+            ['class_name' => 'Product', 'profile' => 'print', 'language' => 'de', 'objects' => 4, 'average_score' => 43, 'complete' => 1, 'failing' => 3, 'threshold' => 80, 'last_calculated_at' => '2026-09-08 10:00:00'],
+        ];
+
+        $table = $this->builder->summaryTable($summary);
+        self::assertSame(['class', 'profile', 'lang', 'objects', 'avg', 'complete', 'failing', 'threshold'], $table['header']);
+        self::assertSame(['Product', 'default', '-', '4', ' 64 %', '1', '3', '100 %'], $table['rows'][0]);
+
+        $csv = explode("\n", trim($this->builder->summaryCsv($summary)));
+        self::assertSame(implode(',', ReportBuilder::SUMMARY_COLUMNS), $csv[0]);
+        self::assertSame('Product,print,de,4,43,1,3,80,"2026-09-08 10:00:00"', $csv[2]);
+
+        self::assertStringContainsString('| Product | print | de | 4 | 43 % | 1 | 3 | 80 % |', $this->builder->summaryTableMarkdown($summary));
+    }
+
     public function testSummaryMarkdownWithoutProblems(): void
     {
         $markdown = $this->builder->summaryMarkdown([], [], []);

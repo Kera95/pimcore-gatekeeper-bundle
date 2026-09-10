@@ -31,7 +31,8 @@ tsf_gatekeeper:
             # threshold from the class unless it sets its own.
             profiles:
                 print:
-                    required: [name, ean, long_description, hotspot_image]
+                    # Fields inside object bricks / field collections: container.Type.field
+                    required: [name, ean, long_description, hotspot_image, bricks.Dimensions.width, features.Feature.label]
                     languages: [de]
                     threshold: 80
                 marketplace:
