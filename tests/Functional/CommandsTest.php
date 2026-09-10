@@ -85,19 +85,44 @@ final class CommandsTest extends FunctionalTestCase
         self::assertStringContainsString('GkProduct', (string) $summary->getData());
     }
 
-    public function testAddScoreFieldAppendsANumericFieldOnce(): void
+    public function testAddScoreFieldAppendsANumericFieldWithoutTouchingTheOtherColumns(): void
     {
-        // a class of its own: the command regenerates the PHP class, and objects of a class that was
-        // already loaded in this process would break on their next save
-        $tester = $this->runCommand('tsf:gatekeeper:add-score-field', ['class' => ClassFixtures::SCORE_TARGET, '--name' => 'score']);
-        self::assertSame(0, $tester->getStatusCode(), $tester->getDisplay());
+        // a class of its own, created and deleted here: the command rewrites the class definition and
+        // regenerates its PHP class, which would strand objects of a class other tests already loaded
+        $class = ClassFixtures::createScoreTarget();
+        $storeTable = 'object_store_' . $class->getId();
+        self::assertSame(['name', 'oo_id', 'sku'], $this->columns($storeTable));
 
-        $class = ClassDefinition::getByName(ClassFixtures::SCORE_TARGET);
-        self::assertInstanceOf(Numeric::class, $class->getFieldDefinitions()['score'] ?? null);
+        try {
+            $tester = $this->runCommand('tsf:gatekeeper:add-score-field', ['class' => ClassFixtures::SCORE_TARGET, '--name' => 'score']);
+            self::assertSame(0, $tester->getStatusCode(), $tester->getDisplay());
 
-        $again = $this->runCommand('tsf:gatekeeper:add-score-field', ['class' => ClassFixtures::SCORE_TARGET, '--name' => 'score']);
-        self::assertSame(1, $again->getStatusCode());
-        self::assertStringContainsString('already has a field "score"', $again->getDisplay());
+            // reloaded from the definition file; getByName() would hand back the very instance the
+            // command mutated, which proves nothing about what was written
+            $saved = ClassDefinition::getById($class->getId(), true);
+            self::assertInstanceOf(Numeric::class, $saved->getFieldDefinitions()['score'] ?? null);
+
+            // saving a class whose field definitions were emptied drops every data column of its
+            // tables, so assert the columns survived alongside the new one
+            self::assertSame(['name', 'oo_id', 'score', 'sku'], $this->columns($storeTable));
+
+            $again = $this->runCommand('tsf:gatekeeper:add-score-field', ['class' => ClassFixtures::SCORE_TARGET, '--name' => 'score']);
+            self::assertSame(1, $again->getStatusCode());
+            self::assertStringContainsString('already has a field "score"', $again->getDisplay());
+        } finally {
+            ClassDefinition::getById($class->getId(), true)?->delete();
+        }
+    }
+
+    /**
+     * @return string[] column names, sorted
+     */
+    private function columns(string $table): array
+    {
+        $columns = array_keys($this->connection()->createSchemaManager()->listTableColumns($table));
+        sort($columns);
+
+        return $columns;
     }
 
     private function countRows(): int

@@ -31,5 +31,9 @@ All notable changes to this bundle are documented here. The format follows
 
 - The Custom Reports definitions no longer set `pagination`, which the Pimcore 11 configuration
   tree rejects (12 and 2026 default it to true anyway).
-- `tsf:gatekeeper:add-score-field` refreshes the field definitions of the loaded class, so a
-  second call in the same process sees the new field.
+- `tsf:gatekeeper:add-score-field` no longer saves the class with an empty field definition list.
+  It cleared the cached definitions before saving, and outside the admin Pimcore does not rebuild
+  them from the layout, so the save dropped every data column of `object_store_<class>` and
+  `object_query_<class>` and removed the matching relation rows. The command now re-assigns the
+  layout, which rebuilds the definitions. **Anyone who ran this command on a real installation
+  should check the affected class tables and restore from a backup if columns are missing.**

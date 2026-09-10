@@ -28,12 +28,14 @@ final class StudioReportsTest extends FunctionalTestCase
         self::assertInstanceOf(Config::class, $summary);
         $summarySql = (string) $summary->getDataSourceConfig()->sql;
 
-        // the Custom Reports SQL adapter wraps the statement in a subquery the same way
-        $rows = $this->connection()->fetchAllAssociative('SELECT * FROM (' . $objectsSql . ') r');
+        // the Custom Reports SQL adapter wraps the statement in a subquery and orders outside it,
+        // exactly the way this does; neither statement orders on its own
+        $rows = $this->connection()->fetchAllAssociative('SELECT * FROM (' . $objectsSql . ') r ORDER BY r.profile, r.language');
         self::assertCount(3, $rows);
         self::assertSame($product->getKey(), $rows[0]['object_key']);
+        self::assertSame(['default', 'default', 'print'], array_column($rows, 'profile'));
 
-        $totals = $this->connection()->fetchAllAssociative('SELECT * FROM (' . $summarySql . ') r');
+        $totals = $this->connection()->fetchAllAssociative('SELECT * FROM (' . $summarySql . ') r ORDER BY r.class_name, r.profile, r.language');
         self::assertCount(3, $totals);
         self::assertSame(['GkProduct', 'default', 'de'], [$totals[0]['class_name'], $totals[0]['profile'], $totals[0]['language']]);
     }

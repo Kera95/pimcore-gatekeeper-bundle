@@ -20,8 +20,10 @@ use Pimcore\Model\DataObject\Objectbrick;
  *  - GkDimensions (object brick on GkProduct.bricks): width, height
  *  - GkProduct: sku, name, localized title + description, completeness (score field),
  *    features (GkFeature), bricks (GkDimensions)
- *  - GkScoreTarget: name only. Reserved for tsf:gatekeeper:add-score-field, which alters the class;
- *    never instantiate it, the generated PHP class loaded earlier in the process would be stale.
+ *
+ * GkScoreTarget is not created here: a test that changes a class definition creates and deletes it
+ * itself (createScoreTarget()), so no other test can hold objects of a class whose PHP file is
+ * regenerated underneath them.
  */
 final class ClassFixtures
 {
@@ -42,10 +44,6 @@ final class ClassFixtures
                 self::input('name'),
                 self::localized([self::input('title')]),
             ]);
-        }
-
-        if (ClassDefinition::getByName(self::SCORE_TARGET) === null) {
-            self::createClass(self::SCORE_TARGET, [self::input('name')]);
         }
 
         if (Fieldcollection\Definition::getByKey(self::FEATURE) === null) {
@@ -90,9 +88,17 @@ final class ClassFixtures
     }
 
     /**
+     * Throwaway class for tests that alter a class definition. The caller deletes it again.
+     */
+    public static function createScoreTarget(): ClassDefinition
+    {
+        return self::createClass(self::SCORE_TARGET, [self::input('name'), self::input('sku')]);
+    }
+
+    /**
      * @param Data[] $fields
      */
-    private static function createClass(string $name, array $fields): void
+    private static function createClass(string $name, array $fields): ClassDefinition
     {
         $class = new ClassDefinition();
         $class->setName($name);
@@ -101,6 +107,8 @@ final class ClassFixtures
         $class->setUserModification(1);
         $class->setLayoutDefinitions(self::panel($fields));
         $class->save();
+
+        return $class;
     }
 
     /**

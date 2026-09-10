@@ -7,10 +7,14 @@ namespace Tsf\GatekeeperBundle\Tests\Support\Helper;
 use Codeception\Module;
 use Pimcore;
 use Pimcore\Bootstrap;
+use Pimcore\Event\TestEvents;
 use Pimcore\Tests\Support\Util\Autoloader;
+use Pimcore\Tests\Support\Util\TestHelper;
+use Symfony\Component\EventDispatcher\GenericEvent;
 use Symfony\Component\Filesystem\Filesystem;
 use Tsf\GatekeeperBundle\Tests\Support\App\Kernel;
 use Tsf\GatekeeperBundle\Tests\Support\Fixture\ClassFixtures;
+use Tsf\GatekeeperBundle\Tests\Support\PimcoreStubKernel;
 
 use function sprintf;
 
@@ -28,14 +32,16 @@ final class Gatekeeper extends Module
         if ($dsn === '') {
             throw new \RuntimeException(
                 'PIMCORE_TEST_DB_DSN is not set. The functional suite needs a database it may drop and ' .
-                'recreate, e.g. PIMCORE_TEST_DB_DSN=mysql://root:root@127.0.0.1:3306/tsf_gatekeeper_test'
+                'recreate, e.g. PIMCORE_TEST_DB_DSN=mysql://root:root@127.0.0.1:3306/tsf_gatekeeper_test. ' .
+                'The unit suite needs no database: run "codecept run Unit".'
             );
         }
 
         $root = dirname(__DIR__) . '/App';
         $fs = new Filesystem();
-        // a stale compiled container would ignore config changes (APP_DEBUG is off)
-        $fs->remove($root . '/var/cache');
+        // a stale compiled container would ignore config changes (APP_DEBUG is off); the kernel
+        // reads its cache directory from APP_CACHE_DIR when the environment sets one
+        $fs->remove($_SERVER['APP_CACHE_DIR'] ?? $root . '/var/cache');
         $fs->mkdir([$root . '/var/config', $root . '/var/classes', $root . '/public/var']);
 
         foreach (['APP_ENV' => 'test', 'PIMCORE_TEST' => '1', 'PIMCORE_TEST_DB_DSN' => $dsn] as $name => $value) {
@@ -44,10 +50,11 @@ final class Gatekeeper extends Module
         }
 
         // Pimcore 2026 validates the product registration when the container is compiled, unless the
-        // "needs install" marker is present. The test project is never registered.
-        if (($_SERVER['PIMCORE_PRODUCT_KEY'] ?? '') === '') {
-            $fs->touch($root . '/var/config/needs-install.lock');
-        }
+        // "needs install" marker is present. The test project is never registered and never installed
+        // through Pimcore's installer, so the marker is always correct here - and it must be written
+        // even when the environment happens to carry a product key of a surrounding project, whose
+        // encryption secret and instance identifier this project does not have.
+        $fs->touch($root . '/var/config/needs-install.lock');
 
         if (!defined('PIMCORE_PROJECT_ROOT')) {
             define('PIMCORE_PROJECT_ROOT', $root);
@@ -70,11 +77,26 @@ final class Gatekeeper extends Module
         Bootstrap::setProjectRoot();
         Bootstrap::bootstrap();
 
+        // Pimcore's own module keeps whatever kernel is already set, so a stub left behind by the
+        // unit suite (running first, e.g. "codecept run Unit,Functional") would be used for the
+        // whole functional suite. Boot the real one over it, the way that module would.
+        if (Pimcore::getKernel() instanceof PimcoreStubKernel) {
+            $kernel = Bootstrap::kernel();
+            $kernel->getContainer()->get('event_dispatcher')->dispatch(new GenericEvent(), TestEvents::KERNEL_BOOTED);
+        }
+
         Autoloader::addNamespace('Pimcore\\Model\\DataObject', PIMCORE_CLASS_DIRECTORY . '/DataObject');
     }
 
     public function _beforeSuite(array $settings = []): void
     {
+        if (!TestHelper::supportsDbTests()) {
+            // Pimcore's module could not set up the database; its own TestCase skips every test
+            $this->debug('[GATEKEEPER] No database, skipping the bundle installation and the fixtures');
+
+            return;
+        }
+
         $kernel = Pimcore::getKernel();
         if ($kernel === null) {
             throw new \RuntimeException('The Pimcore kernel is not booted; is the Pimcore module enabled after this one?');
