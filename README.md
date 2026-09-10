@@ -248,14 +248,36 @@ mirror and never blocks the save; `tsf:gatekeeper:validate` reports the exact pr
 
 ## Testing
 
+Two Codeception suites:
+
 ```bash
 composer install
-vendor/bin/codecept run
+
+# unit: no database, no Pimcore kernel
+vendor/bin/codecept run Unit
+
+# functional: boots a minimal Pimcore kernel against a real database
+PIMCORE_TEST_DB_DSN=mysql://root:root@127.0.0.1:3306/tsf_gatekeeper_test vendor/bin/codecept run Functional
 ```
 
-The unit suite runs without a database or a Pimcore kernel; it covers the configuration, rule
-normalisation, the emptiness rules per data type, the evaluator, the listener with every gate
-mode, the report rendering and the report definitions.
+The unit suite covers the configuration, rule normalisation, the emptiness rules per data type,
+the evaluator, the listener with every gate mode, the report rendering and the report definitions.
+
+The functional suite runs the bundle inside a throwaway Pimcore project (`tests/Support/App`,
+Pimcore core plus the Custom Reports bundle) and covers what only a real save can show: the
+installer, the gate refusing a publish, the score field and the result rows written during a
+save, the delete hook, every console command, the asset export and the Custom Reports
+definitions. **The database named in `PIMCORE_TEST_DB_DSN` is dropped and recreated on every
+run**, so point it at a dedicated one. No Pimcore product key is needed; the test project boots
+with the "needs install" marker that skips the registration check.
+
+From inside a Pimcore project that consumes the bundle as a path package, run the suites with the
+project's vendor directory, e.g. with the skeleton's `test` compose profile:
+
+```bash
+docker compose exec -T php sh -c 'cd bundles/Tsf/GatekeeperBundle && ../../../vendor/bin/codecept run Unit'
+docker compose run --rm test-php sh -c 'cd bundles/Tsf/GatekeeperBundle && ../../../vendor/bin/codecept run Functional'
+```
 
 ## Contributing
 

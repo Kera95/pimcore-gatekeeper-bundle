@@ -16,7 +16,25 @@ jobs:
     tests:
         name: Pimcore ${{ matrix.pimcore_line }} / PHP ${{ matrix.php_version }}
         runs-on: ubuntu-latest
-        timeout-minutes: 15
+        timeout-minutes: 20
+
+        services:
+            mariadb:
+                image: mariadb:10.11
+                env:
+                    MARIADB_ROOT_PASSWORD: root
+                    MARIADB_DATABASE: tsf_gatekeeper_test
+                ports:
+                    - 3306:3306
+                options: >-
+                    --health-cmd="healthcheck.sh --connect --innodb_initialized"
+                    --health-interval=10s
+                    --health-timeout=5s
+                    --health-retries=10
+
+        env:
+            # the functional suite drops and recreates this database on every run
+            PIMCORE_TEST_DB_DSN: mysql://root:root@127.0.0.1:3306/tsf_gatekeeper_test
 
         strategy:
             fail-fast: false
@@ -85,5 +103,8 @@ jobs:
                   --no-progress
                   --no-blocking
 
-            - name: Run Codeception
-              run: vendor/bin/codecept run
+            - name: Run the unit suite
+              run: vendor/bin/codecept run Unit
+
+            - name: Run the functional suite
+              run: vendor/bin/codecept run Functional

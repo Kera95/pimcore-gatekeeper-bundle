@@ -23,3 +23,17 @@ All notable changes to this bundle are documented here. The format follows
 - `tsf:gatekeeper:report --summary` for the per class/profile/language totals on the console.
 - Emptiness rules per data type with an `EmptinessResolverInterface` extension point.
 - Codeception unit suite that runs without a database or a Pimcore kernel.
+- Codeception functional suite that boots a minimal Pimcore kernel (`tests/Support/App`) against a
+  real database and covers the installer, the gate, the score field and result rows on save, the
+  delete hook, the console commands, the asset export and the Custom Reports definitions.
+
+### Fixed
+
+- The Custom Reports definitions no longer set `pagination`, which the Pimcore 11 configuration
+  tree rejects (12 and 2026 default it to true anyway).
+- `tsf:gatekeeper:add-score-field` no longer saves the class with an empty field definition list.
+  It cleared the cached definitions before saving, and outside the admin Pimcore does not rebuild
+  them from the layout, so the save dropped every data column of `object_store_<class>` and
+  `object_query_<class>` and removed the matching relation rows. The command now re-assigns the
+  layout, which rebuilds the definitions. **Anyone who ran this command on a real installation
+  should check the affected class tables and restore from a backup if columns are missing.**
