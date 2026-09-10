@@ -36,28 +36,18 @@ class FieldReader
 
     public function getDefinition(ClassDefinition $class, string $field): ?Data
     {
-        $path = $this->parse($field);
-        if ($path === null) {
-            return $this->topLevel($class, $field) ?? $this->localizedChild($class, $field);
-        }
+        $holder = $this->holder($class, $field);
 
-        $definition = $this->containerDefinition($class, $path[0], $path[1]);
-
-        return $definition === null ? null : ($this->topLevelOf($definition, $path[2]) ?? $this->localizedChildOf($definition, $path[2]));
+        return $holder === null ? null : ($this->topLevelOf($holder[0], $holder[1]) ?? $this->localizedChildOf($holder[0], $holder[1]));
     }
 
     public function isLocalized(ClassDefinition $class, string $field): bool
     {
-        $path = $this->parse($field);
-        if ($path === null) {
-            return $this->topLevel($class, $field) === null && $this->localizedChild($class, $field) !== null;
-        }
+        $holder = $this->holder($class, $field);
 
-        $definition = $this->containerDefinition($class, $path[0], $path[1]);
-
-        return $definition !== null
-            && $this->topLevelOf($definition, $path[2]) === null
-            && $this->localizedChildOf($definition, $path[2]) !== null;
+        return $holder !== null
+            && $this->topLevelOf($holder[0], $holder[1]) === null
+            && $this->localizedChildOf($holder[0], $holder[1]) !== null;
     }
 
     /**
@@ -81,6 +71,9 @@ class FieldReader
         }
 
         [$container, $type, $name] = $path;
+        if ($name === self::LOCALIZED_CONTAINER) {
+            return sprintf('"%s": list the localized fields of "%s" by name instead of "%s".', $field, $type, $name);
+        }
         $containerDefinition = $this->topLevel($class, $container);
         if (!$containerDefinition instanceof Data\Objectbricks && !$containerDefinition instanceof Data\Fieldcollections) {
             return sprintf('"%s": "%s" is not an object bricks or field collections field of the class.', $field, $container);
@@ -88,10 +81,11 @@ class FieldReader
         if (!in_array($type, $containerDefinition->getAllowedTypes(), true)) {
             return sprintf('"%s": type "%s" is not allowed in "%s" (allowed: %s).', $field, $type, $container, implode(', ', $containerDefinition->getAllowedTypes()) ?: 'none');
         }
-        if ($this->containerDefinition($class, $container, $type) === null) {
+        $holder = $this->containerDefinition($class, $container, $type);
+        if ($holder === null) {
             return sprintf('"%s": the %s definition "%s" does not exist.', $field, $containerDefinition instanceof Data\Objectbricks ? 'object brick' : 'field collection', $type);
         }
-        if ($this->getDefinition($class, $field) === null) {
+        if (($this->topLevelOf($holder, $name) ?? $this->localizedChildOf($holder, $name)) === null) {
             return sprintf('"%s": field "%s" does not exist in "%s".', $field, $name, $type);
         }
 
@@ -208,9 +202,22 @@ class FieldReader
         }
     }
 
-    private function localizedChild(ClassDefinition $class, string $field): ?Data
+    /**
+     * The definition that holds the field (the class itself, or the brick / collection definition
+     * of a nested path) together with the plain field name; null when a nested path cannot be resolved.
+     *
+     * @return array{0: ClassDefinition|Objectbrick\Definition|Fieldcollection\Definition, 1: string}|null
+     */
+    private function holder(ClassDefinition $class, string $field): ?array
     {
-        return $this->localizedChildOf($class, $field);
+        $path = $this->parse($field);
+        if ($path === null) {
+            return [$class, $field];
+        }
+
+        $definition = $this->containerDefinition($class, $path[0], $path[1]);
+
+        return $definition === null ? null : [$definition, $path[2]];
     }
 
     /**

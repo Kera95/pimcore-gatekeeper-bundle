@@ -81,6 +81,10 @@ final class ReportCommand extends Command
 
     private function renderSummary(InputInterface $input, OutputInterface $output, SymfonyStyle $io, string $format): void
     {
+        if ($input->getOption('below') !== null || $input->getOption('only-failed')) {
+            $io->warning('--below and --only-failed do not apply to --summary; the totals cover all rows.');
+        }
+
         $summary = $this->store->fetchSummary($input->getOption('class'), $input->getOption('profile-name'), $input->getOption('language'));
 
         if ($format === 'csv') {

@@ -97,6 +97,7 @@ final class FieldReaderTest extends Unit
         yield 'type not allowed' => ['bricks.Other.width', 'type "Other" is not allowed in "bricks" (allowed: Dimensions)'];
         yield 'field missing in brick' => ['bricks.Dimensions.depth', 'field "depth" does not exist in "Dimensions"'];
         yield 'localizedfields container' => ['localizedfields', 'list the localized fields by name'];
+        yield 'nested localizedfields container' => ['bricks.Dimensions.localizedfields', 'list the localized fields of "Dimensions" by name'];
     }
 
     public function testReadAllReturnsOneValueForTopLevelFields(): void

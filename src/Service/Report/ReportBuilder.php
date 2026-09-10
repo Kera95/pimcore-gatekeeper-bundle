@@ -13,6 +13,8 @@ use function is_string;
  */
 class ReportBuilder
 {
+    public const SUMMARY_COLUMNS = ['class_name', 'profile', 'language', 'objects', 'average_score', 'complete', 'failing', 'threshold', 'last_calculated_at'];
+
     public const CSV_COLUMNS = ['object_id', 'object_key', 'path', 'class_name', 'published', 'profile', 'language', 'score', 'threshold', 'passed', 'missing_count', 'missing_fields', 'calculated_at'];
 
     /**
@@ -116,18 +118,12 @@ class ReportBuilder
         foreach ($this->sections($rows) as $section) {
             $out[] = '### ' . $section['title'];
             $out[] = '';
-            $out[] = '| ' . implode(' | ', $section['header']) . ' |';
-            $out[] = '|' . str_repeat(' --- |', count($section['header']));
-            foreach ($section['rows'] as $row) {
-                $out[] = '| ' . implode(' | ', array_map(static fn (string $cell): string => str_replace('|', '\\|', trim($cell)), $row)) . ' |';
-            }
+            array_push($out, ...$this->markdownTable($section['header'], $section['rows']));
             $out[] = '';
         }
 
         return implode("\n", $out);
     }
-
-    public const SUMMARY_COLUMNS = ['class_name', 'profile', 'language', 'objects', 'average_score', 'complete', 'failing', 'threshold', 'last_calculated_at'];
 
     /**
      * Summary rows (ResultStore::fetchSummary) as a single table: header + string cells
@@ -167,12 +163,26 @@ class ReportBuilder
     public function summaryTableMarkdown(array $summary): string
     {
         $table = $this->summaryTable($summary);
-        $out = ['| ' . implode(' | ', $table['header']) . ' |', '|' . str_repeat(' --- |', count($table['header']))];
-        foreach ($table['rows'] as $row) {
-            $out[] = '| ' . implode(' | ', array_map('trim', $row)) . ' |';
+
+        return implode("\n", $this->markdownTable($table['header'], $table['rows']));
+    }
+
+    /**
+     * Header, separator and one line per row, cells trimmed and pipes escaped
+     *
+     * @param string[] $header
+     * @param array<int, array<int, string>> $rows
+     *
+     * @return string[]
+     */
+    private function markdownTable(array $header, array $rows): array
+    {
+        $out = ['| ' . implode(' | ', $header) . ' |', '|' . str_repeat(' --- |', count($header))];
+        foreach ($rows as $row) {
+            $out[] = '| ' . implode(' | ', array_map(static fn (string $cell): string => str_replace('|', '\\|', trim($cell)), $row)) . ' |';
         }
 
-        return implode("\n", $out);
+        return $out;
     }
 
     /**
