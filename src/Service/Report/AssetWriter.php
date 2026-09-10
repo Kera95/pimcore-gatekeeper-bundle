@@ -86,7 +86,7 @@ class AssetWriter
     public function write(string $filename, string $content): string
     {
         $folder = AssetService::createFolderByPath($this->getFolder());
-        if (!$folder instanceof Asset\Folder) {
+        if (!$folder instanceof Asset\Folder || $folder->getId() === null) {
             throw new \RuntimeException(sprintf('Could not create the asset folder "%s".', $this->getFolder()));
         }
 

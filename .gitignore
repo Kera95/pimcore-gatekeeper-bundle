@@ -5,3 +5,6 @@ composer.lock
 /codeception.yml
 /tests/*.suite.yml
 /tests/_output/
+/phpstan.neon
+/.php-cs-fixer.php
+/.php-cs-fixer.cache

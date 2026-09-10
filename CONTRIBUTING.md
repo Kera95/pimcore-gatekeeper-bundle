@@ -33,8 +33,15 @@ tagging the merge commit (`vX.Y.Z`), pushing the tag and publishing a GitHub rel
   From inside a Pimcore project that consumes the bundle as a path package, run them with the
   project's vendor directory: `cd bundles/Tsf/GatekeeperBundle && ../../../vendor/bin/codecept run Unit`
   (the functional suite needs the project's test database, e.g. `docker compose run --rm test-php ...`).
+- Keep the static analysis and the code style clean:
+
+  ```bash
+  composer phpstan
+  composer cs:check    # composer cs:fix writes the changes
+  ```
+
 - CI runs both suites against Pimcore 11.x (PHP 8.1), 12.x (PHP 8.3) and 2026.x (PHP 8.5) with a
-  MariaDB service; all three must pass.
+  MariaDB service, and PHPStan plus PHP-CS-Fixer in a separate workflow; all of them must pass.
 - Describe behaviour changes in `CHANGELOG.md` under *Unreleased* and in `README.md` when the
   configuration or a command changes.
 

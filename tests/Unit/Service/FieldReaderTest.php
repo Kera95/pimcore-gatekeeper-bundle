@@ -37,7 +37,7 @@ final class FieldReaderTest extends Unit
         $collection->setKey('Feature');
         $collection->setLayoutDefinitions(self::layout([self::field(Data\Input::class, 'label')]));
 
-        $this->reader = new class($brick, $collection) extends FieldReader {
+        $this->reader = new class ($brick, $collection) extends FieldReader {
             public function __construct(private readonly Objectbrick\Definition $brick, private readonly Fieldcollection\Definition $collection)
             {
             }
@@ -169,7 +169,7 @@ final class FieldReaderTest extends Unit
 
     private static function brickItem(?string $width, bool $doDelete): Objectbrick\Data\AbstractData
     {
-        $item = new class() extends Objectbrick\Data\AbstractData {
+        $item = new class () extends Objectbrick\Data\AbstractData {
             public ?string $width = null;
 
             public function __construct()
@@ -189,7 +189,7 @@ final class FieldReaderTest extends Unit
 
     private static function brickContainer(ObjectStub $object, ?Objectbrick\Data\AbstractData $dimensions): Objectbrick
     {
-        return new class($object, 'bricks', $dimensions) extends Objectbrick {
+        return new class ($object, 'bricks', $dimensions) extends Objectbrick {
             public function __construct(ObjectStub $object, string $fieldname, private readonly ?Objectbrick\Data\AbstractData $dimensions)
             {
                 parent::__construct($object, $fieldname);
@@ -204,7 +204,7 @@ final class FieldReaderTest extends Unit
 
     private static function collectionItem(string $type, string $label): Fieldcollection\Data\AbstractData
     {
-        $item = new class() extends Fieldcollection\Data\AbstractData {
+        $item = new class () extends Fieldcollection\Data\AbstractData {
             public string $itemType = '';
 
             public string $label = '';

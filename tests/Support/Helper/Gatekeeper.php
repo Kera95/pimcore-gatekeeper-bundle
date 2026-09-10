@@ -88,6 +88,9 @@ final class Gatekeeper extends Module
         Autoloader::addNamespace('Pimcore\\Model\\DataObject', PIMCORE_CLASS_DIRECTORY . '/DataObject');
     }
 
+    /**
+     * @param array<string, mixed> $settings
+     */
     public function _beforeSuite(array $settings = []): void
     {
         if (!TestHelper::supportsDbTests()) {

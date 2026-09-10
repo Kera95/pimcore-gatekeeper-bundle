@@ -1,6 +1,7 @@
 # TsfGatekeeperBundle
 
 [![Codeception](https://github.com/Kera95/pimcore-gatekeeper-bundle/actions/workflows/codeception.yml/badge.svg)](https://github.com/Kera95/pimcore-gatekeeper-bundle/actions/workflows/codeception.yml)
+[![Quality](https://github.com/Kera95/pimcore-gatekeeper-bundle/actions/workflows/quality.yml/badge.svg)](https://github.com/Kera95/pimcore-gatekeeper-bundle/actions/workflows/quality.yml)
 
 A completeness gate for [Pimcore](https://pimcore.com/) DataObjects, for Pimcore 11.x, 12.x and
 2026.x. You declare per class which fields have to be filled, optionally per language and per
@@ -278,6 +279,18 @@ project's vendor directory, e.g. with the skeleton's `test` compose profile:
 docker compose exec -T php sh -c 'cd bundles/Tsf/GatekeeperBundle && ../../../vendor/bin/codecept run Unit'
 docker compose run --rm test-php sh -c 'cd bundles/Tsf/GatekeeperBundle && ../../../vendor/bin/codecept run Functional'
 ```
+
+## Static analysis and code style
+
+```bash
+composer phpstan     # PHPStan level 6 over src/ and tests/
+composer cs:check    # PHP-CS-Fixer, report only
+composer cs:fix      # PHP-CS-Fixer, write the changes
+```
+
+PHPStan is configured for the whole supported PHP range (8.1 to 8.5), so a call that only exists
+in a newer version is reported even when the analysis runs on the newest one. Both tools run in
+CI on every push.
 
 ## Contributing
 

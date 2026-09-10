@@ -52,6 +52,9 @@ final class ObjectStub extends Concrete
         return $this->values[$fieldName] ?? null;
     }
 
+    /**
+     * @param array<int, mixed> $args
+     */
     public function __call(string $method, array $args): mixed
     {
         if (str_starts_with($method, 'set')) {

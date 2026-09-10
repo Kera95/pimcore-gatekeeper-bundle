@@ -10,10 +10,10 @@ use Pimcore\Model\DataObject\ClassDefinition\Data;
 use Pimcore\Model\DataObject\Data\Hotspotimage;
 use Pimcore\Model\DataObject\Data\Link;
 use Pimcore\Model\DataObject\Data\QuantityValue;
-use Pimcore\Model\DataObject\QuantityValue\Unit as QuantityUnit;
 use Pimcore\Model\DataObject\Data\Video;
 use Pimcore\Model\DataObject\Fieldcollection;
 use Pimcore\Model\DataObject\Objectbrick;
+use Pimcore\Model\DataObject\QuantityValue\Unit as QuantityUnit;
 use Tsf\GatekeeperBundle\Service\Emptiness\EmptinessChecker;
 use Tsf\GatekeeperBundle\Service\Emptiness\EmptinessResolverInterface;
 use Tsf\GatekeeperBundle\Service\Emptiness\Resolver\FieldcollectionResolver;
@@ -130,7 +130,7 @@ final class EmptinessCheckerTest extends Unit
 
     public function testCustomResolverWinsOverTheDefaults(): void
     {
-        $custom = new class() implements EmptinessResolverInterface {
+        $custom = new class () implements EmptinessResolverInterface {
             public function supports(Data $fieldDefinition): bool
             {
                 return $fieldDefinition instanceof Data\Input;
@@ -199,22 +199,25 @@ final class EmptinessCheckerTest extends Unit
 
     private static function fieldcollectionItem(): Fieldcollection\Data\AbstractData
     {
-        return new class() extends Fieldcollection\Data\AbstractData {
+        return new class () extends Fieldcollection\Data\AbstractData {
         };
     }
 
     private static function brickContainer(bool $doDelete): Objectbrick
     {
-        $brick = new class() extends Objectbrick\Data\AbstractData {
+        $brick = new class () extends Objectbrick\Data\AbstractData {
             public function __construct()
             {
             }
         };
         $brick->setDoDelete($doDelete);
 
-        $container = new class(new ObjectStub('Product'), 'bricks') extends Objectbrick {
+        $container = new class (new ObjectStub('Product'), 'bricks') extends Objectbrick {
             public ?Objectbrick\Data\AbstractData $dimensions = null;
 
+            /**
+             * @return array<int, Objectbrick\Data\AbstractData>
+             */
             public function getItems(bool $withInheritedValues = false): array
             {
                 return $this->dimensions === null ? [] : [$this->dimensions];
