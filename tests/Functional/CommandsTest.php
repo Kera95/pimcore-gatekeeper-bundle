@@ -87,13 +87,15 @@ final class CommandsTest extends FunctionalTestCase
 
     public function testAddScoreFieldAppendsANumericFieldOnce(): void
     {
-        $tester = $this->runCommand('tsf:gatekeeper:add-score-field', ['class' => ClassFixtures::CATEGORY, '--name' => 'score']);
+        // a class of its own: the command regenerates the PHP class, and objects of a class that was
+        // already loaded in this process would break on their next save
+        $tester = $this->runCommand('tsf:gatekeeper:add-score-field', ['class' => ClassFixtures::SCORE_TARGET, '--name' => 'score']);
         self::assertSame(0, $tester->getStatusCode(), $tester->getDisplay());
 
-        $class = ClassDefinition::getByName(ClassFixtures::CATEGORY);
+        $class = ClassDefinition::getByName(ClassFixtures::SCORE_TARGET);
         self::assertInstanceOf(Numeric::class, $class->getFieldDefinitions()['score'] ?? null);
 
-        $again = $this->runCommand('tsf:gatekeeper:add-score-field', ['class' => ClassFixtures::CATEGORY, '--name' => 'score']);
+        $again = $this->runCommand('tsf:gatekeeper:add-score-field', ['class' => ClassFixtures::SCORE_TARGET, '--name' => 'score']);
         self::assertSame(1, $again->getStatusCode());
         self::assertStringContainsString('already has a field "score"', $again->getDisplay());
     }

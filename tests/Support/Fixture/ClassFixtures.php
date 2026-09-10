@@ -20,6 +20,8 @@ use Pimcore\Model\DataObject\Objectbrick;
  *  - GkDimensions (object brick on GkProduct.bricks): width, height
  *  - GkProduct: sku, name, localized title + description, completeness (score field),
  *    features (GkFeature), bricks (GkDimensions)
+ *  - GkScoreTarget: name only. Reserved for tsf:gatekeeper:add-score-field, which alters the class;
+ *    never instantiate it, the generated PHP class loaded earlier in the process would be stale.
  */
 final class ClassFixtures
 {
@@ -31,6 +33,8 @@ final class ClassFixtures
 
     public const DIMENSIONS = 'GkDimensions';
 
+    public const SCORE_TARGET = 'GkScoreTarget';
+
     public static function create(): void
     {
         if (ClassDefinition::getByName(self::CATEGORY) === null) {
@@ -38,6 +42,10 @@ final class ClassFixtures
                 self::input('name'),
                 self::localized([self::input('title')]),
             ]);
+        }
+
+        if (ClassDefinition::getByName(self::SCORE_TARGET) === null) {
+            self::createClass(self::SCORE_TARGET, [self::input('name')]);
         }
 
         if (Fieldcollection\Definition::getByKey(self::FEATURE) === null) {

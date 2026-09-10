@@ -29,5 +29,7 @@ All notable changes to this bundle are documented here. The format follows
 
 ### Fixed
 
+- The Custom Reports definitions no longer set `pagination`, which the Pimcore 11 configuration
+  tree rejects (12 and 2026 default it to true anyway).
 - `tsf:gatekeeper:add-score-field` refreshes the field definitions of the loaded class, so a
   second call in the same process sees the new field.

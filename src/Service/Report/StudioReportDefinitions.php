@@ -111,7 +111,7 @@ final class StudioReportDefinitions
             'shareGlobally' => true,
             'sharedUserNames' => [],
             'sharedRoleNames' => [],
-            'pagination' => true,
+            // no 'pagination': unknown to the Pimcore 11 config tree, defaults to true on 12 and 2026
             'modificationDate' => self::TIMESTAMP,
             'creationDate' => self::TIMESTAMP,
             'dataSourceConfig' => [
