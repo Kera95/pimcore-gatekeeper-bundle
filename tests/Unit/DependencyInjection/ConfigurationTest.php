@@ -71,6 +71,8 @@ final class ConfigurationTest extends Unit
 
     /**
      * @dataProvider invalidConfigurations
+     *
+     * @param array<string, mixed> $config
      */
     public function testInvalidConfigurationsAreRejected(array $config, string $messagePart): void
     {

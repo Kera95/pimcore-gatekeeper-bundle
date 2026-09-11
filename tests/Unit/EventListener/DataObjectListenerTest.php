@@ -217,7 +217,7 @@ final class DataObjectListenerTest extends Unit
             'Product' => new ClassRule('Product', true, $gate, $scoreField, ['default' => new Profile('default', ['sku', 'name'], [], 100)]),
         ]);
 
-        $logger = new class($this->logs) extends AbstractLogger {
+        $logger = new class ($this->logs) extends AbstractLogger {
             /**
              * @param array<int, array{0: string, 1: string}> $logs
              */

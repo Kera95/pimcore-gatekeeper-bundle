@@ -151,6 +151,9 @@ abstract class FunctionalTestCase extends TestCase
         return $keyed;
     }
 
+    /**
+     * @param array<string, mixed> $input
+     */
     protected function runCommand(string $name, array $input = []): CommandTester
     {
         $application = new Application(Pimcore::getKernel());

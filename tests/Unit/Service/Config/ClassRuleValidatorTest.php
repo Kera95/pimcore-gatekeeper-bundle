@@ -72,7 +72,7 @@ final class ClassRuleValidatorTest extends Unit
         $languages = $this->createMock(LanguageProvider::class);
         $languages->method('getValidLanguages')->willReturn(['en', 'de']);
 
-        return new class($reader, $languages, $classExists) extends ClassRuleValidator {
+        return new class ($reader, $languages, $classExists) extends ClassRuleValidator {
             public function __construct(FieldReader $reader, LanguageProvider $languages, private readonly bool $exists)
             {
                 parent::__construct($reader, $languages);
