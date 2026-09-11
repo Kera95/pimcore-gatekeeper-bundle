@@ -11,7 +11,8 @@ $finder = PhpCsFixer\Finder::create()
 
 return (new PhpCsFixer\Config())
     ->setRiskyAllowed(true)
-    // the bundle targets PHP 8.1, CI also runs the tool on 8.3 and 8.5
+    // the bundle targets PHP 8.1 and CI runs the tool on 8.3; allow the newer runtimes of the
+    // development containers, where the fixer may not know the very latest syntax yet
     ->setUnsupportedPhpVersionAllowed(true)
     ->setRules([
         '@PSR12' => true,

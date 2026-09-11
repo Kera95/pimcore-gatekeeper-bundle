@@ -5,8 +5,11 @@ parameters:
         - tests
     excludePaths:
         analyseAndScan:
-            # the throwaway project of the functional suite: generated classes and caches
-            - tests/Support/App/var
+            # the throwaway project of the functional suite: generated classes, caches and the
+            # service reference Symfony writes next to its configuration. Both only exist once
+            # the suite has run, hence optional
+            - tests/Support/App/var (?)
+            - tests/Support/App/config/reference.php (?)
     # Pimcore ships its Codeception support under autoload-dev, so composer does not register it
     # for dependent packages; the test bootstrap maps the namespace by hand and so does this
     scanDirectories:

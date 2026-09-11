@@ -7,4 +7,3 @@ composer.lock
 /tests/_output/
 /phpstan.neon
 /.php-cs-fixer.php
-/.php-cs-fixer.cache

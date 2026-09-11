@@ -33,7 +33,9 @@ tagging the merge commit (`vX.Y.Z`), pushing the tag and publishing a GitHub rel
   From inside a Pimcore project that consumes the bundle as a path package, run them with the
   project's vendor directory: `cd bundles/Tsf/GatekeeperBundle && ../../../vendor/bin/codecept run Unit`
   (the functional suite needs the project's test database, e.g. `docker compose run --rm test-php ...`).
-- Keep the static analysis and the code style clean:
+- Keep the static analysis and the code style clean. Both tools live in the bundle's own
+  `require-dev`, so they need `composer install` in this directory — the consuming project's
+  vendor directory does not ship them:
 
   ```bash
   composer phpstan
