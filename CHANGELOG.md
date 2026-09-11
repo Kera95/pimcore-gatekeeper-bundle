@@ -6,6 +6,10 @@ All notable changes to this bundle are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-09-11
+
+First stable release, for Pimcore 11.x, 12.x and 2026.x on PHP 8.1 to 8.5.
+
 ### Added
 
 - Per-class completeness rules (`required`, `languages`, `threshold`, `gate`, `score_field`) with
@@ -37,3 +41,6 @@ All notable changes to this bundle are documented here. The format follows
   `object_query_<class>` and removed the matching relation rows. The command now re-assigns the
   layout, which rebuilds the definitions. **Anyone who ran this command on a real installation
   should check the affected class tables and restore from a backup if columns are missing.**
+
+[Unreleased]: https://github.com/Kera95/pimcore-gatekeeper-bundle/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/Kera95/pimcore-gatekeeper-bundle/releases/tag/v1.0.0
