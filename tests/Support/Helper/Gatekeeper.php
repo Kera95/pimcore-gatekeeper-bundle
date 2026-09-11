@@ -12,6 +12,7 @@ use Pimcore\Tests\Support\Util\Autoloader;
 use Pimcore\Tests\Support\Util\TestHelper;
 use Symfony\Component\EventDispatcher\GenericEvent;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\HttpKernel\KernelInterface;
 use Tsf\GatekeeperBundle\Tests\Support\App\Kernel;
 use Tsf\GatekeeperBundle\Tests\Support\Fixture\ClassFixtures;
 use Tsf\GatekeeperBundle\Tests\Support\PimcoreStubKernel;
@@ -81,6 +82,9 @@ final class Gatekeeper extends Module
         // unit suite (running first, e.g. "codecept run Unit,Functional") would be used for the
         // whole functional suite. Boot the real one over it, the way that module would.
         if (Pimcore::getKernel() instanceof PimcoreStubKernel) {
+            // Bootstrap::kernel() names the project's App\Kernel in its return type, a class that
+            // does not exist in a standalone checkout, so narrow to the interface the code needs
+            /** @var KernelInterface $kernel */
             $kernel = Bootstrap::kernel();
             $kernel->getContainer()->get('event_dispatcher')->dispatch(new GenericEvent(), TestEvents::KERNEL_BOOTED);
         }
