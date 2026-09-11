@@ -32,11 +32,13 @@ final class PimcoreStubKernel implements KernelInterface
     }
 
     /**
-     * Installs the stub as the kernel Pimcore's static helpers read from
+     * Installs the stub as the kernel Pimcore's static helpers read from. If the functional suite
+     * ran first in the same process, the real kernel is replaced, so unit tests never silently
+     * depend on a booted Pimcore.
      */
     public static function register(): void
     {
-        if (!Pimcore::getKernel() instanceof KernelInterface) {
+        if (!Pimcore::getKernel() instanceof self) {
             Pimcore::setKernel(new self());
         }
     }

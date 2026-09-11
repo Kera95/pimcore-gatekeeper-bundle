@@ -41,13 +41,9 @@ class ClassRuleValidator
 
         foreach ($rule->getProfiles() as $profile) {
             foreach ($profile->getRequired() as $field) {
-                if ($field === FieldReader::LOCALIZED_CONTAINER) {
-                    $problems[] = sprintf('%s/%s: list the localized fields by name instead of "%s".', $rule->getClassName(), $profile->getName(), $field);
-
-                    continue;
-                }
-                if ($this->fieldReader->getDefinition($class, $field) === null) {
-                    $problems[] = sprintf('%s/%s: field "%s" does not exist on the class (top-level or localized).', $rule->getClassName(), $profile->getName(), $field);
+                $problem = $this->fieldReader->describeProblem($class, $field);
+                if ($problem !== null) {
+                    $problems[] = sprintf('%s/%s: %s', $rule->getClassName(), $profile->getName(), $problem);
                 }
             }
 

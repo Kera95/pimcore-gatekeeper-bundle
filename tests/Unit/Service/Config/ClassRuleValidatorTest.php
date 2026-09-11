@@ -60,13 +60,19 @@ final class ClassRuleValidatorTest extends Unit
     private function validator(array $fields, bool $classExists = true): ClassRuleValidator
     {
         $reader = $this->createMock(FieldReader::class);
-        $reader->method('getDefinition')->willReturnCallback(static fn (ClassDefinition $c, string $f): ?Data => $fields[$f] ?? null);
         $reader->method('topLevel')->willReturnCallback(static fn (ClassDefinition $c, string $f): ?Data => $fields[$f] ?? null);
+        $reader->method('describeProblem')->willReturnCallback(static function (ClassDefinition $c, string $f) use ($fields): ?string {
+            if ($f === FieldReader::LOCALIZED_CONTAINER) {
+                return 'list the localized fields by name instead of "localizedfields".';
+            }
+
+            return isset($fields[$f]) ? null : sprintf('field "%s" does not exist on the class (top-level or localized).', $f);
+        });
 
         $languages = $this->createMock(LanguageProvider::class);
         $languages->method('getValidLanguages')->willReturn(['en', 'de']);
 
-        return new class($reader, $languages, $classExists) extends ClassRuleValidator {
+        return new class ($reader, $languages, $classExists) extends ClassRuleValidator {
             public function __construct(FieldReader $reader, LanguageProvider $languages, private readonly bool $exists)
             {
                 parent::__construct($reader, $languages);

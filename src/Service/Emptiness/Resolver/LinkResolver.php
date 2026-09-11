@@ -21,7 +21,8 @@ final class LinkResolver implements EmptinessResolverInterface
             return true;
         }
 
-        // A link without a target is not a link, whatever else is set (text, title, target)
-        return trim((string) $value->getDirect()) === '' && ($value->getInternal() === null || $value->getInternal() === '');
+        // A link without a target is not a link, whatever else is set (text, title, target).
+        // getInternal() is the id of the linked element, so null is the only empty value.
+        return trim((string) $value->getDirect()) === '' && $value->getInternal() === null;
     }
 }

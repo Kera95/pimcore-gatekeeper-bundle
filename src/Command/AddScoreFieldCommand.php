@@ -79,8 +79,9 @@ final class AddScoreFieldCommand extends Command
         $field->setIndex(true);
 
         $target->addChild($field);
-        // the field definition cache was filled by getFieldDefinition() above; rebuild it from the layout
-        $class->setFieldDefinitions(null);
+        // re-assigning the layout rebuilds the field definitions from it, so the (runtime cached)
+        // definition knows the new field right away, not only after the next load
+        $class->setLayoutDefinitions($root);
         $class->save();
 
         $io->success(sprintf('Added Numeric field "%s" to class "%s".', $name, $className));

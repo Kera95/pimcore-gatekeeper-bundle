@@ -23,6 +23,9 @@
   "require-dev": {
     "codeception/codeception": "^5.0",
     "codeception/module-asserts": "^3.0",
+    "codeception/module-symfony": "^3.5",
+    "friendsofphp/php-cs-fixer": "^3.95",
+    "phpstan/phpstan": "^2.1",
     "phpunit/phpunit": "^10.5 || ^11.0",
     "symfony/event-dispatcher": "^6.2 || ^7.3"
   },
@@ -52,6 +55,11 @@
   "minimum-stability": "stable",
   "prefer-stable": true,
   "scripts": {
-    "test": "codecept run"
+    "test": "codecept run Unit && codecept run Functional",
+    "test:unit": "codecept run Unit",
+    "test:functional": "codecept run Functional",
+    "phpstan": "phpstan analyse --no-progress",
+    "cs:check": "php-cs-fixer fix --dry-run --diff",
+    "cs:fix": "php-cs-fixer fix"
   }
 }

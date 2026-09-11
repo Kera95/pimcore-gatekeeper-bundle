@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use Composer\Autoload\ClassLoader;
-use Tsf\GatekeeperBundle\Tests\Support\PimcoreStubKernel;
 
 $autoloaders = [
     // standalone checkout of the bundle
@@ -15,6 +14,7 @@ $autoloaders = [
 foreach ($autoloaders as $autoloader) {
     if (file_exists($autoloader)) {
         require_once $autoloader;
+        define('TSF_GATEKEEPER_VENDOR_DIR', dirname($autoloader));
 
         break;
     }
@@ -28,11 +28,9 @@ if (!class_exists(ClassLoader::class)) {
 
 // The bundle is consumed as a composer path package, so the surrounding project's autoloader knows
 // the src/ namespace but not autoload-dev of this package. Registering the test namespace here keeps
-// the suite runnable both standalone and from inside a project.
+// the suite runnable both standalone and from inside a project. Pimcore's own test support classes
+// (Codeception module, TestHelper) ship with pimcore/pimcore but are autoload-dev there as well.
 $testLoader = new ClassLoader();
 $testLoader->addPsr4('Tsf\\GatekeeperBundle\\Tests\\', __DIR__);
+$testLoader->addPsr4('Pimcore\\Tests\\', TSF_GATEKEEPER_VENDOR_DIR . '/pimcore/pimcore/tests');
 $testLoader->register();
-
-// The unit suite never boots a real Pimcore kernel. A stub is enough for the few core helpers
-// (Pimcore\Model\Element\Service) that reach for the container to dispatch their events.
-PimcoreStubKernel::register();
