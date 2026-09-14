@@ -14,6 +14,8 @@ use function count;
  * Turns the processed "classes" configuration into ClassRule objects. The class-level "required"
  * list becomes the profile named "default"; every other profile inherits languages and threshold
  * from the class when it does not set its own.
+ *
+ * @api
  */
 final class RuleSet
 {

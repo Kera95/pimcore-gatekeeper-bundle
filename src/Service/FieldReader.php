@@ -27,6 +27,8 @@ use function sprintf;
  * Values are read without language fallback, so a value that only exists through the fallback
  * language does not count as filled. A field collection yields one candidate value per item of
  * the given type; the field counts as filled when any item has it filled.
+ *
+ * @api
  */
 class FieldReader
 {

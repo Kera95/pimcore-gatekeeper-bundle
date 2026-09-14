@@ -100,6 +100,41 @@ final class DataObjectListenerTest extends Unit
         $this->listener(Gate::Block)->onPreSave(new DataObjectEvent(new ObjectStub('Product', 2, 'ABC-123', true)));
     }
 
+    public function testSkipGateParameterSavesAPublishedIncompleteObjectAndStillStoresTheRows(): void
+    {
+        $object = new ObjectStub('Product', 2, 'ABC-123', true);
+        $evaluation = $this->evaluation(false);
+        $this->evaluator->method('evaluate')->willReturn($evaluation);
+        $this->scoreWriter->expects(self::once())->method('write')->with($object, 'completeness', 50);
+        $this->store->expects(self::once())->method('save')->with(2, $evaluation);
+
+        $listener = $this->listener(Gate::Block, scoreField: 'completeness');
+        $listener->onPreSave(new DataObjectEvent($object, [DataObjectListener::SKIP_GATE_PARAMETER => true]));
+        $listener->onPostSave(new DataObjectEvent($object));
+
+        self::assertCount(1, $this->logs);
+        self::assertSame('info', $this->logs[0][0]);
+        self::assertStringContainsString('gate skipped on request for Product "ABC-123"', $this->logs[0][1]);
+    }
+
+    public function testSkipGateParameterIsSilentWhenTheGateWouldNotHaveFired(): void
+    {
+        $this->evaluator->method('evaluate')->willReturn($this->evaluation(false));
+
+        $this->listener(Gate::Block)->onPreSave(new DataObjectEvent(new ObjectStub('Product', 2, 'ABC-123', false), [DataObjectListener::SKIP_GATE_PARAMETER => true]));
+
+        self::assertSame([], $this->logs);
+    }
+
+    public function testAFalseSkipGateParameterStillGates(): void
+    {
+        $this->evaluator->method('evaluate')->willReturn($this->evaluation(false));
+
+        $this->expectException(ValidationException::class);
+
+        $this->listener(Gate::Block)->onPreSave(new DataObjectEvent(new ObjectStub('Product', 3, 'ABC-124', true), [DataObjectListener::SKIP_GATE_PARAMETER => false]));
+    }
+
     public function testBlockGateLetsUnpublishedObjectsThrough(): void
     {
         $this->evaluator->method('evaluate')->willReturn($this->evaluation(false));

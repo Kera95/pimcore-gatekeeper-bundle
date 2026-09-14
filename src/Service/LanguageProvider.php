@@ -8,6 +8,8 @@ use Pimcore\Tool;
 
 /**
  * Thin wrapper around the static Pimcore helpers so callers can be unit tested without a kernel
+ *
+ * @api
  */
 class LanguageProvider
 {
