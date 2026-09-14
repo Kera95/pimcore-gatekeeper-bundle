@@ -164,6 +164,20 @@ The gate only concerns **published** objects; unpublished saves and drafts alway
 | `warn` | A warning is logged: `Completeness gate: Product "ABC-123" is incomplete. default/de (71% < 100%): title, short_description` |
 | `block` | The save is rejected with a `ValidationException` carrying the same message. Studio shows it as the error of the save (HTTP 422), the Classic Admin as its validation dialog. |
 
+### Skipping the gate for one save
+
+Tooling that fills fields in steps (an import, an enrichment job) may have to save a published
+object that is still incomplete afterwards. Pass the save parameter and that one save is not
+warned about or blocked; the score, the score field and the result rows are still updated:
+
+```php
+use Tsf\GatekeeperBundle\EventListener\DataObjectListener;
+
+$object->save([DataObjectListener::SKIP_GATE_PARAMETER => true]);
+```
+
+The skip is logged at `info`. The next ordinary save is gated again.
+
 ## Reports
 
 ### Admin UI
@@ -246,6 +260,31 @@ mirror and never blocks the save; `tsf:gatekeeper:validate` reports the exact pr
 - `pimcore.dataobject.postDelete`: the rows of the object are removed.
 - Nothing is saved twice, no flags, no queue. Studio autosave and "save version" do not dispatch
   `preUpdate`, so drafts are scored on the next real save.
+
+## Reading the results from your own code
+
+`Tsf\GatekeeperBundle\Service\ResultStore` is the read API for other bundles; inject it and use
+the two typed methods. Both return `Tsf\GatekeeperBundle\Model\ResultRow` objects with the object
+id, key and path, class, published flag, profile, language (`""` when not language specific),
+score, threshold, `isPassed()`, `getMissing()` (field paths in the syntax above) and
+`getCalculatedAt()`.
+
+```php
+use Tsf\GatekeeperBundle\Service\ResultStore;
+
+// failing rows only, optionally narrowed; rows are ordered by class, profile, object id, language
+$rows = $resultStore->findFailing(className: 'Product', profile: 'default', language: 'de', limit: 200);
+foreach ($rows as $row) {
+    // $row->getObjectId(), $row->getMissing() => ['title', 'short_description']
+}
+
+// every row of one object, all profiles and languages
+$rows = $resultStore->findByObject($objectId);
+```
+
+`FieldReader` (field definition lookup and value reading for a field path), `EmptinessChecker`,
+`RuleSet` and `LanguageProvider` are autowirable services too and marked `@api` (inject them, the
+container services are private); everything else may change between minor versions.
 
 ## Testing
 

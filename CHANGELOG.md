@@ -6,6 +6,17 @@ All notable changes to this bundle are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- Typed read API for other bundles: `ResultStore::findFailing(?class, ?profile, ?language, ?limit)`
+  and `ResultStore::findByObject(int)` return `Model\ResultRow` objects; `fetchRows()` takes an
+  optional `$limit`.
+- Save parameter `DataObjectListener::SKIP_GATE_PARAMETER` (`tsf_gatekeeper_skip_gate`): a save
+  that passes it is scored and stored but not warned about or blocked, for tooling that fills
+  fields in steps.
+- `@api` markers on `ResultStore`, `ResultRow`, `FieldReader`, `EmptinessChecker`, `RuleSet`,
+  `LanguageProvider`, `ClassRule` and `Profile`.
+
 ## [1.0.0] - 2026-09-11
 
 First stable release, for Pimcore 11.x, 12.x and 2026.x on PHP 8.1 to 8.5.
