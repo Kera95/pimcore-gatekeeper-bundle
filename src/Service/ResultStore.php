@@ -129,18 +129,16 @@ class ResultStore
      */
     public function findByObject(int $objectId): array
     {
-        [$where, $params] = $this->filters(null, null, null, null, false);
-        $where = ($where === '' ? ' WHERE ' : $where . ' AND ') . 'r.object_id = :object_id';
-        $params['object_id'] = $objectId;
-
         return array_map(
             static fn (array $row): ResultRow => ResultRow::fromArray($row),
-            $this->connection->fetchAllAssociative($this->rowsSql($where), $params)
+            $this->connection->fetchAllAssociative($this->rowsSql(' WHERE r.object_id = :object_id'), ['object_id' => $objectId])
         );
     }
 
     /**
-     * Result rows joined with the object tree, ordered by class, profile, language, score
+     * Result rows joined with the object tree, ordered by class, profile, object id, language
+     *
+     * @param int|null $limit stop after this many rows
      *
      * @return array<int, array<string, mixed>>
      */

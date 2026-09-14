@@ -283,8 +283,8 @@ $rows = $resultStore->findByObject($objectId);
 ```
 
 `FieldReader` (field definition lookup and value reading for a field path), `EmptinessChecker`,
-`RuleSet` and `LanguageProvider` are public services too and marked `@api`; everything else may
-change between minor versions.
+`RuleSet` and `LanguageProvider` are autowirable services too and marked `@api` (inject them, the
+container services are private); everything else may change between minor versions.
 
 ## Testing
 
