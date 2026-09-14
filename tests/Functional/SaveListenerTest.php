@@ -6,6 +6,7 @@ namespace Tsf\GatekeeperBundle\Tests\Functional;
 
 use Pimcore\Model\DataObject;
 use Pimcore\Model\Element\ValidationException;
+use Tsf\GatekeeperBundle\EventListener\DataObjectListener;
 use Tsf\GatekeeperBundle\Service\ResultStore;
 use Tsf\GatekeeperBundle\Tests\Support\FunctionalTestCase;
 
@@ -53,6 +54,29 @@ final class SaveListenerTest extends FunctionalTestCase
 
         self::assertNull($product->getId());
         self::assertSame(0, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM `' . ResultStore::TABLE . '`'));
+    }
+
+    public function testSkipGateParameterSavesAPublishedIncompleteProductAndScoresIt(): void
+    {
+        $product = $this->product(['sku' => 'SKU-2b', 'name' => 'Cable', 'title' => ['en' => 'Cable']]);
+        $product->save([DataObjectListener::SKIP_GATE_PARAMETER => true]);
+
+        self::assertNotNull($product->getId());
+        self::assertTrue($product->getPublished());
+        self::assertSame(0, $product->getCompleteness());
+
+        $rows = $this->rows($product->getId());
+        self::assertCount(3, $rows);
+        self::assertSame('title', $rows['default|de']['missing_fields']);
+
+        // the next ordinary save is gated again
+        $product->setName('Cable XL');
+        try {
+            $product->save();
+            self::fail('Expected the block gate to refuse the save.');
+        } catch (ValidationException $e) {
+            self::assertStringContainsString('Completeness gate: GkProduct', $e->getMessage());
+        }
     }
 
     public function testIncompleteUnpublishedProductIsStoredWithItsScore(): void

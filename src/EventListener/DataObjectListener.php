@@ -26,9 +26,20 @@ use function sprintf;
  *
  * The evaluation travels from pre to post in a WeakMap keyed by the object, so nested or
  * concurrent saves in one request cannot mix up. Nothing here ever calls save().
+ *
+ * Trusted tooling that fills fields in steps can pass SKIP_GATE_PARAMETER to save() so a published
+ * object that is still incomplete afterwards is saved anyway: the score, the score field and the
+ * rows are still updated, only the warn/block step is skipped for that one save.
+ *
+ * @api
  */
 class DataObjectListener
 {
+    /**
+     * `$object->save([DataObjectListener::SKIP_GATE_PARAMETER => true])`
+     */
+    public const SKIP_GATE_PARAMETER = 'tsf_gatekeeper_skip_gate';
+
     /**
      * @var WeakMap<Concrete, Evaluation>
      */
@@ -79,6 +90,14 @@ class DataObjectListener
             } catch (\Throwable $e) {
                 $this->logger->error(sprintf('Gatekeeper: could not write score field "%s" on %s: %s', $rule->getScoreField(), $rule->getClassName(), $e->getMessage()), ['exception' => $e]);
             }
+        }
+
+        if ($event->hasArgument(self::SKIP_GATE_PARAMETER) && $event->getArgument(self::SKIP_GATE_PARAMETER)) {
+            if (!$evaluation->isPassed() && $object->isPublished() && $rule->getGate() !== Gate::Off) {
+                $this->logger->info(sprintf('Gatekeeper: gate skipped on request for %s "%s" (%s).', $rule->getClassName(), $object->getKey() ?? $object->getId() ?? 'new', $evaluation->describeFailures()), ['object_id' => $object->getId()]);
+            }
+
+            return;
         }
 
         $this->applyGate($object, $rule, $evaluation);

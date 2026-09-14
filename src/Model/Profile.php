@@ -7,6 +7,8 @@ namespace Tsf\GatekeeperBundle\Model;
 /**
  * One named rule set of a class: which fields must be filled, for which languages, and the score
  * that counts as complete. The class-level rule is the profile named "default".
+ *
+ * @api
  */
 final class Profile
 {

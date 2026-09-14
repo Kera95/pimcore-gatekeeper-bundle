@@ -6,6 +6,11 @@ namespace Tsf\GatekeeperBundle\Service\Emptiness;
 
 use Pimcore\Model\DataObject\ClassDefinition\Data;
 
+/**
+ * Decides emptiness per field definition through the tagged resolvers, Data::isEmpty() as fallback.
+ *
+ * @api
+ */
 final class EmptinessChecker
 {
     /**

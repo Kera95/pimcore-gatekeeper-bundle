@@ -7,12 +7,18 @@ namespace Tsf\GatekeeperBundle\Service;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 use Tsf\GatekeeperBundle\Model\Evaluation;
+use Tsf\GatekeeperBundle\Model\ResultRow;
 
 use function count;
 
 /**
  * The bundle's own table: one row per object, profile and language. Source of truth for every
  * report; the optional score field on the object is only a mirror of the aggregate.
+ *
+ * Other bundles read the table through findFailing() and findByObject(), which return ResultRow
+ * objects; the raw fetch*() methods feed the bundle's own reports and may change shape.
+ *
+ * @api
  */
 class ResultStore
 {
@@ -99,22 +105,65 @@ class ResultStore
     }
 
     /**
+     * Failing rows (score below the threshold) as objects, optionally narrowed to a class, profile
+     * and language. The stable read API for other bundles: which fields are missing on which
+     * object, per language.
+     *
+     * @param int|null $limit stop after this many rows (rows are ordered by class, profile, object id, language)
+     *
+     * @return ResultRow[]
+     */
+    public function findFailing(?string $className = null, ?string $profile = null, ?string $language = null, ?int $limit = null): array
+    {
+        return array_map(
+            static fn (array $row): ResultRow => ResultRow::fromArray($row),
+            $this->fetchRows($className, $profile, $language, null, true, $limit)
+        );
+    }
+
+    /**
+     * Every stored row of one object, all profiles and languages; empty when the object is not
+     * evaluated (unknown class, disabled rule, never saved since the bundle was installed).
+     *
+     * @return ResultRow[]
+     */
+    public function findByObject(int $objectId): array
+    {
+        [$where, $params] = $this->filters(null, null, null, null, false);
+        $where = ($where === '' ? ' WHERE ' : $where . ' AND ') . 'r.object_id = :object_id';
+        $params['object_id'] = $objectId;
+
+        return array_map(
+            static fn (array $row): ResultRow => ResultRow::fromArray($row),
+            $this->connection->fetchAllAssociative($this->rowsSql($where), $params)
+        );
+    }
+
+    /**
      * Result rows joined with the object tree, ordered by class, profile, language, score
      *
      * @return array<int, array<string, mixed>>
      */
-    public function fetchRows(?string $className = null, ?string $profile = null, ?string $language = null, ?int $below = null, bool $onlyFailed = false): array
+    public function fetchRows(?string $className = null, ?string $profile = null, ?string $language = null, ?int $below = null, bool $onlyFailed = false, ?int $limit = null): array
     {
         [$where, $params] = $this->filters($className, $profile, $language, $below, $onlyFailed);
 
-        $sql = 'SELECT r.object_id, o.`key` AS object_key, CONCAT(o.path, o.`key`) AS path, r.class_name, o.published, o.type,
+        $sql = $this->rowsSql($where);
+        if ($limit !== null) {
+            $sql .= ' LIMIT ' . max(0, $limit);
+        }
+
+        return $this->connection->fetchAllAssociative($sql, $params);
+    }
+
+    private function rowsSql(string $where): string
+    {
+        return 'SELECT r.object_id, o.`key` AS object_key, CONCAT(o.path, o.`key`) AS path, r.class_name, o.published, o.type,
                     r.profile, r.language, r.score, r.threshold, r.passed, r.required_count, r.missing_count, r.missing_fields, r.calculated_at
                 FROM `' . self::TABLE . '` r
                 INNER JOIN objects o ON o.id = r.object_id'
             . $where
             . ' ORDER BY r.class_name, r.profile, r.object_id ASC, r.language';
-
-        return $this->connection->fetchAllAssociative($sql, $params);
     }
 
     /**
