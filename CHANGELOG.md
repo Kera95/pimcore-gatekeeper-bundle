@@ -6,6 +6,15 @@ All notable changes to this bundle are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-09-15
+
+### Changed
+
+- `composer.json` aliases `dev-master` and `dev-develop` to `1.x-dev`, so a project that consumes
+  a checkout of the bundle as a path package can require `^1.1`.
+
+## [1.1.0] - 2026-09-14
+
 ### Added
 
 - Typed read API for other bundles: `ResultStore::findFailing(?class, ?profile, ?language, ?limit)`
